@@ -9,7 +9,7 @@ import random
 
 # --- CONFIGURATION ---
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
-WELCOME_CHANNEL_NAME = "welcome"
+WELCOME_CHANNEL_NAME = "👋-welcome"
 AUTO_ROLE_NAME = "Fastmice Member"
 SERVER_OWNER_ID = os.environ.get("SERVER_OWNER_ID")
 SERVER_OWNER_USERNAME = "a.64_"
