@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# THIS IS THE FULL CODE YOU PROVIDED, WITH THE NEW /sendmsg COMMAND ADDED. NO LINES REMOVED.
+# THIS IS YOUR FULL CODE, WITH THE /giveroletoall COMMAND ADDED. NO LINES REMOVED.
 import os
 import discord
 from discord.ext import commands
@@ -28,7 +28,7 @@ def is_owner():
     return discord.app_commands.check(predicate)
 
 # --- MODAL CLASS FOR SENDING MESSAGE WITH PICTURE (CORRECTED) ---
-class MessageWithPicModal(ui.Modal, title='Message Content for Picture'):
+class MessageWithPicModal(ui.Modal, title='Message Content'):
     message_content = ui.TextInput(label='Message (multi-line supported)', style=discord.TextStyle.paragraph, placeholder='Write your message here...', required=True)
     def __init__(self, target_channel: discord.TextChannel, attachment: discord.Attachment):
         super().__init__()
@@ -126,7 +126,6 @@ async def send_welcome_messages(member: discord.Member):
 
 # --- SLASH COMMANDS (OWNER ONLY) ---
 
-# --- NEW COMMAND ADDED HERE ---
 @bot.tree.command(name="sendmsg", description="[OWNER ONLY] Sends a multi-line text message.")
 @is_owner()
 async def sendmsg(interaction: discord.Interaction, channel: discord.TextChannel):
@@ -200,6 +199,28 @@ async def deleterole(interaction: discord.Interaction, member: discord.Member, r
     await member.remove_roles(role)
     await interaction.response.send_message(f"Removed `{role.name}` from {member.mention}.", ephemeral=True)
 
+# --- NEW COMMAND ADDED HERE ---
+@bot.tree.command(name="giveroletoall", description="[OWNER ONLY] Gives a role to all existing members.")
+@is_owner()
+async def giveroletoall(interaction: discord.Interaction, role: discord.Role):
+    await interaction.response.defer(ephemeral=True, thinking=True)
+    members_to_give_role = [member for member in interaction.guild.members if not member.bot and role not in member.roles]
+    if not members_to_give_role:
+        await interaction.followup.send(f"All members already have the `{role.name}` role.", ephemeral=True)
+        return
+    count_success = 0
+    count_fail = 0
+    for member in members_to_give_role:
+        try:
+            await member.add_roles(role, reason="Mass role assignment by owner.")
+            count_success += 1
+        except Exception as e:
+            print(f"Failed to add role to {member.name}: {e}")
+            count_fail += 1
+        await asyncio.sleep(0.5) # Small delay to avoid rate limits
+    await interaction.followup.send(f"**Task Complete!**\n- Gave role to **{count_success}** members.\n- Failed for **{count_fail}** members.", ephemeral=True)
+
+
 @bot.tree.command(name="testwelcome", description="[OWNER ONLY] Manually triggers the welcome message for a user.")
 @is_owner()
 async def testwelcome(interaction: discord.Interaction, member: discord.Member):
@@ -248,7 +269,7 @@ async def help(interaction: discord.Interaction):
     embed.add_field(name="👋 Public Commands", value=public_commands_list, inline=False)
     if str(interaction.user.id) == SERVER_OWNER_ID:
         admin_commands_list = ("`/sendmsg` `/sendpic` `/sendvidgif` `/sendmsgpic` `/sendvidgifmsg`\n"
-                              "`/sendgallery` `/kick` `/ban` `/addrole` `/deleterole`\n"
+                              "`/sendgallery` `/kick` `/ban` `/addrole` `/deleterole` `/giveroletoall`\n"
                               "`/testwelcome` `/debug_id`")
         embed.add_field(name="👑 Owner Commands (Visible to you only)", value=admin_commands_list, inline=False)
     await interaction.response.send_message(embed=embed, ephemeral=True)
